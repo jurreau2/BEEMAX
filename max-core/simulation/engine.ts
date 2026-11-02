@@ -22,7 +22,6 @@ export interface SimulationRecord<T = unknown> {
   readonly output: T;
   readonly confidence: number;
   readonly provenance: string;
-  /** D1 invariant: replay divergence is exactly zero for a matching deterministic run. */
   readonly divergence: 0;
 }
 export interface SimulationProvenance<T = unknown> {
@@ -31,16 +30,50 @@ export interface SimulationProvenance<T = unknown> {
   readonly stepMs: 1000;
   readonly records: readonly SimulationRecord<T>[];
 }
-
-function copy<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value)) as T;
+export interface SimulationTickState {
+  readonly tickId: number;
+  readonly timestamp: number;
+  /** Stable diagnostic fingerprint; not a cryptographic integrity proof. */
+  readonly stateHash: string;
+  readonly identityAnchor: string;
 }
 
-/** Deterministic 1Hz simulation runner. Wall-clock scheduling remains the host's responsibility. */
+const IDENTITY_ANCHOR = "bba28add4f99bd9aae158f173168145d";
+
+function copy<T>(value: T): T {
+  const serialized = JSON.stringify(value);
+  if (serialized === undefined) throw new TypeError("Simulation values must be JSON serializable");
+  return JSON.parse(serialized) as T;
+}
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value !== null && typeof value === "object") {
+    const object = value as Record<string, unknown>;
+    return `{${Object.keys(object).sort().map((key) => `${JSON.stringify(key)}:${stableJson(object[key])}`).join(",")}}`;
+  }
+  const encoded = JSON.stringify(value);
+  if (encoded === undefined) throw new TypeError("Simulation state contains a non-JSON value");
+  return encoded;
+}
+
+function diagnosticFingerprint(value: unknown): string {
+  const input = `${stableJson(value)}${IDENTITY_ANCHOR}`;
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < input.length; index++) {
+    hash ^= input.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `max-fnv1a-${(hash >>> 0).toString(16).padStart(8, "0")}`;
+}
+
+/** Deterministic logical 1Hz runner; the host must schedule calls to advance/executeTick. */
 export class SimulationEngine<T> {
   private state: T;
   private tickIndex = 0;
   private readonly records: SimulationRecord<T>[] = [];
+  private readonly historyLog: SimulationTickState[] = [];
+
   constructor(private readonly model: SimulationModel<T>) {
     if (!model.id.trim() || !model.version.trim())
       throw new TypeError("simulation id and version are required");
@@ -77,6 +110,20 @@ export class SimulationEngine<T> {
     return this.snapshot;
   }
 
+  /** Records a supplied state at one logical tick. History is isolate-local, not durable storage. */
+  executeTick(payloadState: Record<string, unknown>): SimulationTickState {
+    const state = copy(payloadState);
+    const tickState: SimulationTickState = Object.freeze({
+      tickId: ++this.tickIndex,
+      timestamp: Date.now(),
+      stateHash: diagnosticFingerprint(state),
+      identityAnchor: IDENTITY_ANCHOR,
+    });
+    this.state = state as T;
+    this.historyLog.push(tickState);
+    return { ...tickState };
+  }
+
   exportProvenance(): SimulationProvenance<T> {
     return Object.freeze({
       modelId: this.model.id,
@@ -86,7 +133,10 @@ export class SimulationEngine<T> {
     });
   }
 
-  /** Re-executes recorded inputs from initial state and reports whether outputs match exactly. */
+  getReplayProvenance(): SimulationTickState[] {
+    return this.historyLog.map((record) => ({ ...record }));
+  }
+
   verifyReplay(): { readonly valid: boolean; readonly divergence: number } {
     let state = copy(this.model.initial);
     for (const record of this.records) {
@@ -95,7 +145,7 @@ export class SimulationEngine<T> {
         stepMs: 1000,
         inputs: copy(record.inputs),
       }));
-      if (JSON.stringify(state) !== JSON.stringify(record.output))
+      if (stableJson(state) !== stableJson(record.output))
         return { valid: false, divergence: 1 };
     }
     return { valid: true, divergence: 0 };

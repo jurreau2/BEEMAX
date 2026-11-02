@@ -1,13 +1,7 @@
-# Edge Runtime Wiring
+## Runtime API status and persistence boundaries
 
-`apps/worker/src/runtime.ts` assembles request-scoped transport, D1 storage, telemetry, and a deterministic simulation engine through MAX-CORE's `AdapterRegistry`. `/healthz` provides an unauthenticated, non-secret health summary. It reports configuration/runtime wiring, not a provider reachability probe or production readiness attestation.
+The Worker exposes `/healthz` (and `/health`) as a read-only wiring summary. It reports configuration and registered adapter states; it is not a provider reachability probe or production-readiness attestation. `/sim/tick` and `/sim/provenance` are protected by the existing Portal access control. Tick records currently live in Worker isolate memory and can be lost when an isolate is recycled; they are not D1 or Durable Object persistence. Do not rely on them for audit retention or authoritative replay until a durable, access-controlled store is configured.
 
-`SimulationEngine` provides deterministic logical 1Hz steps and provenance export. Cloudflare Worker requests and scheduled events do not guarantee a one-second wall-clock scheduler. A host must explicitly invoke `advance()` at the desired cadence; this implementation does not claim that a continuously running 1Hz loop is active.
+The simulation engine provides a deterministic logical 1Hz step contract, but neither a fetch request nor a scheduled Worker guarantees a continuously running one-second wall-clock loop. The host must explicitly invoke ticks at the intended cadence.
 
-The runtime health payload intentionally avoids model credentials, user data, and audit contents. Audit export authorization, retention, backup verification, monitoring, and alert delivery remain governed by the deployment readiness checklist. No claim of `$0.00/month`, zero buffering, or immunity to ISP/provider outages is made; costs and availability depend on workload and deployment configuration.
-
-## Validation
-
-- `npm run test -w max-core` exercises registration, explicit adapter state, deterministic inputs, provenance, confidence, and replay divergence.
-- Worker health checks must confirm configured bindings and expose no secret values.
-- Audit export acceptance must verify required lineage fields and reject secret-bearing records before production use.
+State fingerprints are stable diagnostic identifiers only, not cryptographic hashes, signatures, or proof of sovereign identity. The public identity anchor is lineage metadata, never an authentication token. Cloudflare plan, usage, D1/DO storage, egress, and third-party services can incur charges; the runtime makes no `$0.00/month` guarantee.
