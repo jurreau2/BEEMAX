@@ -4,6 +4,7 @@ import { protectPortal, auditAccess } from "./access";
 import kernel from "./kernel";
 import { routeApi } from "./routes/api";
 import { bemaxApi, compatibilityApi } from "./bemax";
+import { createEdgeRuntime } from "./runtime";
 import type { Env } from "./types";
 export { ProductFactoryActor } from "./factory";
 export { MicrokernelProcessActor } from "./kernel";
@@ -19,7 +20,6 @@ export default {
     ctx.waitUntil(
       (async () => {
         if (!env.FACTORY_ACTOR) return;
-        // Reconcile intake committed before actor activation, including pre-upgrade ideas.
         const ideas = await env.DB.prepare(
           `SELECT p.id FROM products p WHERE (p.stage IN ('Idea','Discovery','Validation') OR
           (p.stage='Build' AND EXISTS (SELECT 1 FROM factory_runs r WHERE r.product_id=p.id AND r.status IN ('running','blocked'))))
@@ -48,34 +48,29 @@ export default {
     ctx: ExecutionContext,
   ): Promise<Response> {
     const path = new URL(request.url).pathname;
+    if (path === "/healthz" && request.method === "GET") {
+      const runtime = createEdgeRuntime(env);
+      return Response.json({
+        status: runtime.adapters.list().every((adapter) => adapter.state === "CONNECTED") ? "CONNECTED" : "DEGRADED",
+        adapters: runtime.adapters.list().map(({ kind, id, state, identityAnchor }) => ({ kind, id, state, identityAnchor })),
+        simulation: { id: "portal-edge-health", version: "1.0.0", stepMs: 1000, replay: runtime.simulation.verifyReplay() },
+      }, { headers: { "Cache-Control": "no-store" } });
+    }
 
     const origin = request.headers.get("Origin");
     const allowed = (env.ALLOWED_ORIGINS ?? "")
       .split(",")
       .map((value) => value.trim());
 
-    const headers = new Headers({
-      Vary: "Origin",
-      "Cache-Control": "no-store",
-    });
-
+    const headers = new Headers({ Vary: "Origin", "Cache-Control": "no-store" });
     if (origin && allowed.includes(origin)) {
       headers.set("Access-Control-Allow-Origin", origin);
       headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-      headers.set(
-        "Access-Control-Allow-Headers",
-        "Content-Type, Authorization",
-      );
+      headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
-
     if (origin && !allowed.includes(origin))
-      return Response.json(
-        { error: "Origin not allowed" },
-        { status: 403, headers },
-      );
-
-    if (request.method === "OPTIONS")
-      return new Response(null, { status: 204, headers });
+      return Response.json({ error: "Origin not allowed" }, { status: 403, headers });
+    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
 
     try {
       const access = await protectPortal(request, env);
@@ -84,27 +79,19 @@ export default {
         headers.forEach((value, key) => access.headers.set(key, value));
         return access;
       }
-
       const compat =
-        path.startsWith("/api/bemax") ||
-        path.startsWith("/api/providers") ||
-        path.startsWith("/api/governor") ||
-        path.startsWith("/api/uss")
+        path.startsWith("/api/bemax") || path.startsWith("/api/providers") ||
+        path.startsWith("/api/governor") || path.startsWith("/api/uss")
           ? await compatibilityApi(request, env)
           : null;
-
-      const upstream =
-        path === "/api/session"
-          ? Response.json(access)
-          : compat ??
-              (path.startsWith("/api/bemax")
-                ? (await bemaxApi(request, env)) ?? (await routeApi(request, env))
-                : !path.startsWith("/api/") || path.startsWith("/api/kernel/")
-                  ? await kernel.fetch(request, env, ctx)
-                  : await routeApi(request, env));
-
-      if (request.method !== "GET")
-        ctx.waitUntil(auditAccess(env, request, access, upstream.status));
+      const upstream = path === "/api/session"
+        ? Response.json(access)
+        : compat ?? (path.startsWith("/api/bemax")
+          ? (await bemaxApi(request, env)) ?? (await routeApi(request, env))
+          : !path.startsWith("/api/") || path.startsWith("/api/kernel/")
+            ? await kernel.fetch(request, env, ctx)
+            : await routeApi(request, env));
+      if (request.method !== "GET") ctx.waitUntil(auditAccess(env, request, access, upstream.status));
       const response = new Response(upstream.body, upstream);
       response.headers.delete("Access-Control-Allow-Origin");
       headers.forEach((value, key) => response.headers.set(key, value));
@@ -112,22 +99,12 @@ export default {
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       console.error("[portal-os1] worker request failure", {
-        method: request.method,
-        url: request.url,
-        bindingNames: Object.keys(env ?? {}),
-        message: err.message,
-        stack: err.stack ?? "",
-        sql:
-          typeof (error as any)?.cause === "object" &&
-          "sql" in ((error as any).cause ?? {})
-            ? String((error as any).cause.sql)
-            : undefined,
+        method: request.method, url: request.url, bindingNames: Object.keys(env ?? {}),
+        message: err.message, stack: err.stack ?? "",
+        sql: typeof (error as any)?.cause === "object" && "sql" in ((error as any).cause ?? {})
+          ? String((error as any).cause.sql) : undefined,
       });
-
-      return Response.json(
-        { error: "Portal data is unavailable" },
-        { status: 500, headers },
-      );
+      return Response.json({ error: "Portal data is unavailable" }, { status: 500, headers });
     }
   },
 } satisfies ExportedHandler<Env>;
