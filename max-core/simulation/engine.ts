@@ -121,6 +121,7 @@ export class SimulationEngine<T> {
     });
     this.state = state as T;
     this.historyLog.push(tickState);
+    // Never expose the object retained in the internal replay log.
     return { ...tickState };
   }
 

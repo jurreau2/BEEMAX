@@ -26,7 +26,7 @@ describe("deterministic simulation tick log", () => {
     const engine = new SimulationEngine({ id: "graph-traversal", version: "2", initial: { nodes: 0 }, dependencies: ["graph-v1"], confidence: 1, step: (state, { inputs }) => ({ nodes: state.nodes + Number(inputs.add ?? 1) }) });
     const first = engine.executeTick({ nodes: 4 });
     const originalHash = first.stateHash;
-    first.tickId = 20;
+    expect(engine.getReplayProvenance()[0]).not.toBe(first);
     expect(engine.getReplayProvenance()[0]?.tickId).toBe(1);
     expect(engine.executeTick({ nodes: 4 }).stateHash).toBe(originalHash);
     expect(engine.exportProvenance().records).toHaveLength(0);
