@@ -31,16 +31,18 @@ export default {
     })());
   },
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    const path = new URL(request.url).pathname;
+    const requestUrl = new URL(request.url);
+    const path = requestUrl.pathname;
     const origin = request.headers.get("Origin");
     const allowed = (env.ALLOWED_ORIGINS ?? "").split(",").map((value) => value.trim());
+    const originIsAllowed = Boolean(origin && (origin === requestUrl.origin || allowed.includes(origin)));
     const headers = new Headers({ Vary: "Origin", "Cache-Control": "no-store" });
-    if (origin && allowed.includes(origin)) {
+    if (origin && originIsAllowed) {
       headers.set("Access-Control-Allow-Origin", origin);
       headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
       headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
-    if (origin && !allowed.includes(origin))
+    if (origin && !originIsAllowed)
       return Response.json({ error: "Origin not allowed" }, { status: 403, headers });
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
 
@@ -63,6 +65,12 @@ export default {
         adapters: runtime.adapters.list().map(({ kind, id, state, identityAnchor }) => ({ kind, id, state, identityAnchor })),
         simulation: { id: "portal-edge-health", version: "1.0.0", stepMs: 1000, replay: runtime.simulation.verifyReplay() },
       }, { headers });
+    }
+
+    // The Worker hosts the built Pages app and leaves existing API and simulation routes intact.
+    // Cloudflare's SPA asset handling serves index.html for client-side routes such as /hud.
+    if (!path.startsWith("/api/") && !path.startsWith("/sim/") && env.ASSETS) {
+      return env.ASSETS.fetch(request);
     }
 
     try {
