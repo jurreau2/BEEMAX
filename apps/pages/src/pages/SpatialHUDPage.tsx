@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * portal-os1 // Closet Entity Spatial HUD Page
@@ -9,6 +9,12 @@ export const SpatialHUDPage: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [activeMode, setActiveMode] = useState("PATH-B GRID // STABLE");
   const [resonanceActive, setResonanceActive] = useState(true);
+  const [peerCursors, setPeerCursors] = useState<Array<{ id: string; x: number; y: number; mode: string }>>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const peerId = useRef(`hud-${Math.random().toString(36).slice(2, 10)}`);
+  const socketRef = useRef<WebSocket | null>(null);
+  const modeRef = useRef(activeMode);
+  modeRef.current = activeMode;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -54,6 +60,19 @@ export const SpatialHUDPage: React.FC = () => {
         ctx.arc(cx, cy, 130 + Math.cos(timeTick * 1.2) * 12, 0, Math.PI * 2);
         ctx.stroke();
       }
+
+      for (const cursor of peerCursors) {
+        const px = canvas.width * cursor.x;
+        const py = canvas.height * cursor.y;
+        ctx.fillStyle = cursor.mode.includes("Active") ? "#00ffcc" : "#ffaa00";
+        ctx.beginPath();
+        ctx.arc(px, py, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.8)";
+        ctx.font = "10px monospace";
+        ctx.fillText(cursor.id, px + 8, py + 4);
+      }
+
       animationFrameId = requestAnimationFrame(renderLoop);
     };
 
@@ -62,7 +81,59 @@ export const SpatialHUDPage: React.FC = () => {
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [resonanceActive]);
+  }, [peerCursors, resonanceActive]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("portal-staff-token") || "dev-bypass";
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const socket = new WebSocket(`${protocol}//${window.location.host}/api/space/ws`);
+    socketRef.current = socket;
+
+    socket.onopen = () => {
+      setIsConnected(true);
+      socket.send(JSON.stringify({ type: "auth", token, peerId: peerId.current }));
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "ready") {
+          setIsConnected(true);
+          return;
+        }
+        if (data.type === "peer" && data.id && data.id !== peerId.current) {
+          setPeerCursors((previous) => {
+            const next = previous.filter((entry) => entry.id !== data.id);
+            next.push({ id: data.id, x: data.x, y: data.y, mode: data.mode ?? "STABLE" });
+            return next.slice(-12);
+          });
+        }
+        if (data.type === "leave" && data.id) {
+          setPeerCursors((previous) => previous.filter((entry) => entry.id !== data.id));
+        }
+      } catch {
+        console.error("Malformed instant space telemetry");
+      }
+    };
+
+    socket.onclose = () => setIsConnected(false);
+    socket.onerror = () => setIsConnected(false);
+
+    const handlePosition = () => {
+      if (socket.readyState === WebSocket.OPEN) {
+        const x = 0.5 + Math.sin(Date.now() / 1500) * 0.3;
+        const y = 0.5 + Math.cos(Date.now() / 2100) * 0.25;
+        socket.send(JSON.stringify({ x: Math.min(1, Math.max(0, x)), y: Math.min(1, Math.max(0, y)), mode: modeRef.current }));
+      }
+    };
+
+    const interval = window.setInterval(handlePosition, 500);
+    return () => {
+      window.clearInterval(interval);
+      socket.close();
+      socketRef.current = null;
+    };
+  }, []);
 
   const selectMode = (mode: string) => () => setActiveMode(mode);
 
@@ -73,7 +144,7 @@ export const SpatialHUDPage: React.FC = () => {
         <header style={styles.header}>
           <h1 style={styles.headerTitle}>PORTAL-OS1 // CLOSEST ENTITY CORE</h1>
           <div style={{ textAlign: "right" }}>
-            <div style={styles.statusBadge}>ENTITY: ONLINE [$0.00/MO]</div>
+            <div style={styles.statusBadge}>{isConnected ? "ENTITY: ONLINE [$0.00/MO]" : "ENTITY: RECONNECTING"}</div>
             <div style={styles.subText}>ANCHOR: bba28add4f99bd9aae158f173168145d</div>
           </div>
         </header>
