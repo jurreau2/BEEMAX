@@ -13,6 +13,7 @@ export interface Env {
   DEPARTMENT_CAPACITY?: string;
   ICVS_EXECUTION_SLOTS?: string;
   FACTORY_ACTOR?: DurableObjectNamespace;
+  INSTANT_SPACE?: DurableObjectNamespace;
   DB: D1Database;
   MICROKERNEL_ACTOR?: DurableObjectNamespace;
   ALLOWED_ORIGINS?: string;

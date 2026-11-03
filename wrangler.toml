@@ -18,7 +18,8 @@ migrations_dir = "apps/worker/d1/migrations"
 [durable_objects]
 bindings = [
   { name = "MICROKERNEL_ACTOR", class_name = "MicrokernelProcessActor" },
-  { name = "FACTORY_ACTOR", class_name = "ProductFactoryActor" }
+  { name = "FACTORY_ACTOR", class_name = "ProductFactoryActor" },
+  { name = "INSTANT_SPACE", class_name = "InstantSpaceDurableObject" }
 ]
 
 [[migrations]]
@@ -28,6 +29,10 @@ new_sqlite_classes = ["MicrokernelProcessActor"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["ProductFactoryActor"]
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["InstantSpaceDurableObject"]
 
 [triggers]
 crons = ["* * * * *"]
