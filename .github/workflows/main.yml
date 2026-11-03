@@ -2,8 +2,12 @@ name: Portal-OS1 Release Validation
 
 on:
   push:
-    branches: [main]
+    branches:
+      - add-spatial-hud-page
+      - main
   pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
