@@ -1,5 +1,6 @@
 import type { Env } from "./types";
 import { marketplaceApi, reconcilePayments } from "./marketplace";
+import { addPortalLineageHeaders, PORTAL_LINEAGE_METADATA } from "./provenance";
 export default {
   async scheduled(
     _event: ScheduledController,
@@ -12,11 +13,11 @@ export default {
     const url = new URL(request.url);
     const origin = request.headers.get("Origin");
     const expected = env.MARKETPLACE_ORIGIN;
-    const headers = new Headers({
+    const headers = addPortalLineageHeaders(new Headers({
       "Cache-Control": "no-store",
       Vary: "Origin",
       "X-Content-Type-Options": "nosniff",
-    });
+    }));
     if (origin && origin === expected) {
       headers.set("Access-Control-Allow-Origin", origin);
       headers.set("Access-Control-Allow-Credentials", "true");
@@ -28,13 +29,13 @@ export default {
       (request.method === "POST" && origin !== expected)
     )
       return Response.json(
-        { error: "Origin not allowed" },
+        { error: "Origin not allowed", lineage: PORTAL_LINEAGE_METADATA },
         { status: 403, headers },
       );
     if (request.method === "OPTIONS")
       return new Response(null, { status: 204, headers });
     if (!url.pathname.startsWith("/api/"))
-      return Response.json({ error: "Not found" }, { status: 404, headers });
+      return Response.json({ error: "Not found", lineage: PORTAL_LINEAGE_METADATA }, { status: 404, headers });
     try {
       const response = await marketplaceApi(request, env);
       headers.forEach((value, key) => response.headers.set(key, value));
@@ -51,6 +52,7 @@ export default {
           error: malformed
             ? "Invalid request body"
             : "Marketplace service is temporarily unavailable",
+          lineage: PORTAL_LINEAGE_METADATA,
         },
         { status: malformed ? 400 : 503, headers },
       );

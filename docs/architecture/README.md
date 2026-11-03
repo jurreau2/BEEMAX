@@ -15,5 +15,6 @@ MAX Institute (research authority) → USS (shared reality) → MANIFOLD (univer
 - `institute-policies.md` — policy registry and approval controls.
 - `deployment-readiness.md` — required secrets and production safeguards.
 - `acceptance-tests.md` — validation and release gates.
+- `edge-provenance-and-commerce.md` — Worker lineage labels, static asset boundary, cost limitations, and marketplace/payment claims.
 
 Implementation must preserve provider independence, identity continuity, lineage, deterministic replay, governance approval, measurable confidence, monitoring, recovery, and audit exports. A checklist item or health endpoint is not itself proof of production readiness.

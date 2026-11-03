@@ -5,6 +5,7 @@ import kernel from "./kernel";
 import { routeApi } from "./routes/api";
 import { bemaxApi, compatibilityApi } from "./bemax";
 import { createEdgeRuntime } from "./runtime";
+import { addPortalLineageHeaders, PORTAL_LINEAGE_METADATA } from "./provenance";
 import type { Env } from "./types";
 export { ProductFactoryActor } from "./factory";
 export { MicrokernelProcessActor } from "./kernel";
@@ -33,7 +34,7 @@ export default {
     const path = new URL(request.url).pathname;
     const origin = request.headers.get("Origin");
     const allowed = (env.ALLOWED_ORIGINS ?? "").split(",").map((value) => value.trim());
-    const headers = new Headers({ Vary: "Origin", "Cache-Control": "no-store" });
+    const headers = addPortalLineageHeaders(new Headers({ Vary: "Origin", "Cache-Control": "no-store" }));
     if (origin && allowed.includes(origin)) {
       headers.set("Access-Control-Allow-Origin", origin);
       headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -49,7 +50,9 @@ export default {
       return Response.json({
         status: runtime.adapters.list().every((adapter) => adapter.state === "CONNECTED") ? "CONNECTED" : "DEGRADED",
         substrate: "Portal-OS1 Edge Runtime",
-        identityAnchor: "bba28add4f99bd9aae158f173168145d",
+        identityAnchor: PORTAL_LINEAGE_METADATA.identityAnchor,
+        rootSignature: PORTAL_LINEAGE_METADATA.rootSignature,
+        lineageClass: PORTAL_LINEAGE_METADATA.classification,
         adapters: runtime.adapters.list().map(({ kind, id, state, identityAnchor }) => ({ kind, id, state, identityAnchor })),
         simulation: { id: "portal-edge-health", version: "1.0.0", stepMs: 1000, replay: runtime.simulation.verifyReplay() },
       }, { headers });
@@ -72,10 +75,10 @@ export default {
           return Response.json({ success: false, error: "Expected a JSON object state" }, { status: 400, headers });
         const tick = createEdgeRuntime(env).simulation.executeTick(body as Record<string, unknown>);
         ctx.waitUntil(auditAccess(env, request, access, 200));
-        return Response.json({ success: true, tick }, { headers });
+        return Response.json({ success: true, tick, lineage: PORTAL_LINEAGE_METADATA }, { headers });
       }
       if (path === "/sim/provenance" && request.method === "GET") {
-        return Response.json({ provenance: createEdgeRuntime(env).simulation.getReplayProvenance() }, { headers });
+        return Response.json({ provenance: createEdgeRuntime(env).simulation.getReplayProvenance(), lineage: PORTAL_LINEAGE_METADATA }, { headers });
       }
 
       const compat = path.startsWith("/api/bemax") || path.startsWith("/api/providers") || path.startsWith("/api/governor") || path.startsWith("/api/uss")
