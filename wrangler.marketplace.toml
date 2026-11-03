@@ -6,7 +6,7 @@ MARKETPLACE_ORIGIN = "https://max.games"
 [[d1_databases]]
 binding = "DB"
 database_name = "portal-os1-production1-db"
-database_id = "9d7d73f2-8b3f-4403-b34b-c2a46f580091"
+database_id = "73b4f0ee-5eb1-4ccd-9b50-1ec9ab39532b"
 migrations_dir = "apps/worker/d1/migrations"
 # Add CUSTOMER_IDENTITY, PAYMENTS and DOWNLOADS service bindings for trusted adapters.
 # No public endpoint accepts payment or execution success from a browser.
