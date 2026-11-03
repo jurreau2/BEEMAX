@@ -30,6 +30,7 @@ import MarketplaceOperations from "./pages/MarketplaceOperations";
 import GovernorHome from "./pages/GovernorHome";
 import BemaxHome from "./pages/BemaxHome";
 import { SpatialHUDPage } from "./pages/SpatialHUDPage";
+import { GalleryMarketplacePage } from "./pages/GalleryMarketplacePage";
 import { useGovernor } from "./layouts/GovernorLayout";
 
 function RoleHome() {
@@ -67,6 +68,7 @@ createRoot(document.getElementById("root")!).render(
         </a>
         <Routes>
           <Route path="/hud" element={<SpatialHUDPage />} />
+          <Route path="/gallery" element={<GalleryMarketplacePage />} />
           <Route element={<MainLayout />}>
             <Route index element={<RoleHome />} />
             <Route path="portal/dashboard" element={<Dashboard />} />
