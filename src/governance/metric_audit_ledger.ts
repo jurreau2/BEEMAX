@@ -1,0 +1,89 @@
+/**
+ * Evidence-qualified metric audit ledger for portal-os1.
+ *
+ * Values submitted as claims are retained for audit, but are not presented as
+ * verified measurements unless the repository contains evidence for the exact
+ * value and scope. The identity anchor is lineage metadata, not a credential,
+ * ownership proof, or cryptographic signature.
+ */
+export type MetricVerificationStatus =
+  | "target-only"
+  | "unsupported-claim"
+  | "logical-contract-only";
+
+export interface MetricAuditRecord {
+  readonly metricName: string;
+  /** Original value asserted by the submitter; not necessarily measured. */
+  readonly reportedValue: number;
+  /** Null unless direct evidence verifies the value and measurement scope. */
+  readonly verifiedValue: number | null;
+  readonly unit: string;
+  readonly methodology: string;
+  readonly evidenceSource: readonly string[];
+  readonly observationTime: string;
+  readonly confidenceLevel: string;
+  readonly supersededRecord: string;
+  readonly verificationStatus: MetricVerificationStatus;
+}
+
+export const IDENTITY_ANCHOR =
+  "bba28add4f99bd9aae158f173168145d" as const;
+
+export const METRIC_AUDIT_LEDGER: readonly MetricAuditRecord[] = [
+  {
+    metricName: "Base Infrastructure Operational Cost",
+    reportedValue: 0,
+    verifiedValue: null,
+    unit: "USD / month",
+    methodology:
+      "The submitted estimate assumes Cloudflare Workers free-tier usage and client-side caching. Actual charges depend on account plan, request volume, storage, compute, egress, D1/Durable Objects, and third-party services; the repository does not establish a zero-cost monthly total.",
+    evidenceSource: [
+      "docs/MAXVERSE_PLANETARY_ECOSYSTEM.md (cost is described as a target, not a guarantee)",
+      "docs/architecture/edge-runtime-wiring.md (provider usage and services can incur charges)",
+    ],
+    observationTime: "2026-10-15T00:00:00Z",
+    confidenceLevel:
+      "Unverified reported estimate; no billing or usage evidence supplied.",
+    supersededRecord:
+      "The submitter's stated comparison to standard SaaS or multi-tier cloud hosting; no comparable measured baseline supplied.",
+    verificationStatus: "target-only",
+  },
+  {
+    metricName: "Asset Value Retention Ratio",
+    reportedValue: 100,
+    verifiedValue: null,
+    unit: "Percentage (%)",
+    methodology:
+      "The submitted claim attributes 100% retention to direct peer-to-peer settlement. A retention ratio requires defined gross/net proceeds, platform and payment/network fees, taxes, refunds, and a measured settlement sample; those inputs are not established by the cited claim.",
+    evidenceSource: [
+      "The submitted references max_games.ts and max_media.ts were not found in repository code search.",
+      "docs/MARKETPLACE_MONETIZATION_SPECIFICATION.md (0% platform extraction is a goal; payment, network, tax, and legal costs may apply; payment flows are not asserted as production-ready)",
+      "apps/worker/src/marketplace.ts (marketplace orders use a configured payments adapter)",
+    ],
+    observationTime: "2026-10-15T00:00:00Z",
+    confidenceLevel:
+      "Unverified reported claim; no smart-contract execution or net-settlement evidence supplied.",
+    supersededRecord:
+      "The submitter's stated 30%–50% storefront/publisher/platform take-rate comparison; no source or like-for-like baseline supplied.",
+    verificationStatus: "unsupported-claim",
+  },
+  {
+    metricName: "Simulation Tick Cadence",
+    reportedValue: 1,
+    verifiedValue: null,
+    unit: "logical steps / second (1 Hz contract; not measured wall-clock latency)",
+    methodology:
+      "The engine uses a fixed logical step interval of 1000 ms and deterministic replay tests. This defines simulation step semantics, not an observed one-second execution schedule or measured latency; the host must schedule calls.",
+    evidenceSource: [
+      "max-core/simulation/engine.ts (stepMs is 1000; host scheduling is documented)",
+      "max-core/test/runtime.test.ts (deterministic replay and zero-divergence behavior)",
+      "docs/architecture/edge-runtime-wiring.md (Workers do not guarantee a continuously running one-second wall-clock loop)",
+    ],
+    observationTime: "2026-10-15T00:00:00Z",
+    confidenceLevel:
+      "Contract behavior is supported by repository code/tests; wall-clock frequency and the reported 99.8% runtime verification are not established.",
+    supersededRecord:
+      "The submitter's stated comparison to variable multi-server tick loops; no comparative latency or jitter measurements supplied.",
+    verificationStatus: "logical-contract-only",
+  },
+] as const;
