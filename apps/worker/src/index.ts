@@ -8,6 +8,7 @@ import { createEdgeRuntime } from "./runtime";
 import type { Env } from "./types";
 export { ProductFactoryActor } from "./factory";
 export { MicrokernelProcessActor } from "./kernel";
+export { InstantSpaceDurableObject } from "./InstantSpaceDurableObject";
 
 export default {
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
@@ -42,6 +43,15 @@ export default {
     if (origin && !allowed.includes(origin))
       return Response.json({ error: "Origin not allowed" }, { status: 403, headers });
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
+
+    if (path === "/api/space/ws") {
+      if (request.method !== "GET") return new Response("Method not allowed", { status: 405, headers });
+      if (!env.INSTANT_SPACE) return Response.json({ error: "Spatial sync unavailable" }, { status: 503, headers });
+      if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket")
+        return new Response("Expected Upgrade: websocket", { status: 426, headers });
+      const objectId = env.INSTANT_SPACE.idFromName("portal-os1-spatial-space");
+      return env.INSTANT_SPACE.get(objectId).fetch(request);
+    }
 
     // Health is deliberately read-only and discloses binding status, not credentials or user data.
     if ((path === "/healthz" || path === "/health") && request.method === "GET") {
