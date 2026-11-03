@@ -1,4 +1,4 @@
-name = "max-marketplace"
+name = "market-place"
 main = "apps/worker/src/marketplace-worker.ts"
 compatibility_date = "2026-04-01"
 [vars]
