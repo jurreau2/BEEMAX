@@ -22,10 +22,17 @@ bindings = [
   { name = "INSTANT_SPACE", class_name = "InstantSpaceDurableObject" }
 ]
 
-# NOTE: These Durable Objects were already created in production. Re-adding SQLite
-# migration tags for existing classes causes Cloudflare error 10074 because the
-# classes are already depended on by existing DOs. Keep the bindings only unless
-# you are intentionally creating a brand new class and a fresh migration.
+[exports.MicrokernelProcessActor]
+type = "durable-object"
+storage = "sqlite"
+
+[exports.ProductFactoryActor]
+type = "durable-object"
+storage = "sqlite"
+
+[exports.InstantSpaceDurableObject]
+type = "durable-object"
+storage = "sqlite"
 
 [triggers]
 crons = ["* * * * *"]
