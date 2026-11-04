@@ -53,7 +53,13 @@ export function Sidebar() {
               role === "Governor",
           )
           .map(([to, icon, label]) => (
-            <NavLink key={to} to={to} end={to === "/"}>
+            <NavLink
+              key={to}
+              to={to}
+              end={to === "/"}
+              // The HUD is a standalone screen; reload to discard the portal shell entirely.
+              reloadDocument={to === "/hud"}
+            >
               <Icon name={icon} />
               {label}
               {label === "Dashboard" && <span className="nav-active-dot" />}
