@@ -12,13 +12,16 @@ import {
 import { useApi } from "../../pages/src/hooks/useApi";
 import { request, post, price, type Item } from "./api";
 import "./style.css";
+
 const categories = [
   ["games", "Games", "Play something extraordinary", "◈"],
   ["apps", "Apps", "Make more possible", "⌘"],
   ["art", "Art", "Create without limits", "✳"],
   ["media", "Media", "Find a new perspective", "◉"],
+  ["sports", "Sports", "Follow the action", "⚽"],
   ["institute", "Institute", "Keep your curiosity moving", "↗"],
 ];
+
 function Status({ loading, error }: { loading?: boolean; error?: string }) {
   return error ? (
     <p className="notice error" role="alert">
@@ -30,6 +33,7 @@ function Status({ loading, error }: { loading?: boolean; error?: string }) {
     </p>
   ) : null;
 }
+
 function Card({ item }: { item: Item }) {
   return (
     <Link className={`product-card ${item.type}`} to={`/product/${item.slug}`}>
@@ -47,6 +51,7 @@ function Card({ item }: { item: Item }) {
     </Link>
   );
 }
+
 function Catalog({ category = "products" }: { category?: string }) {
   const [params, setParams] = useSearchParams();
   const query = params.get("q") ?? "";
@@ -61,6 +66,7 @@ function Catalog({ category = "products" }: { category?: string }) {
   );
   const state = useApi(load);
   const current = categories.find((c) => c[0] === category);
+
   return (
     <>
       {category === "products" ? (
@@ -72,7 +78,7 @@ function Catalog({ category = "products" }: { category?: string }) {
           <p>
             New worlds to explore. Tools to make your own.
             <br />
-            Games, apps, art, media and learning — all in one place.
+            Games, apps, art, media, sports and learning — all in one place.
           </p>
           <a className="button light" href="#catalog">
             Explore the marketplace <span>↗</span>
@@ -90,6 +96,7 @@ function Catalog({ category = "products" }: { category?: string }) {
           <p>{current?.[2]}.</p>
         </section>
       )}
+
       <nav className="category-grid" aria-label="Discover categories">
         {categories.map(([slug, title, description, symbol]) => (
           <Link to={`/${slug}`} className={`category ${slug}`} key={slug}>
@@ -102,6 +109,7 @@ function Catalog({ category = "products" }: { category?: string }) {
           </Link>
         ))}
       </nav>
+
       <section id="catalog">
         <div className="section-heading">
           <div className="eyebrow">MADE FOR WHAT COMES NEXT</div>
@@ -132,6 +140,7 @@ function Catalog({ category = "products" }: { category?: string }) {
             <button>Search</button>
           </form>
         </div>
+
         <Status {...state} />
         {state.error && <button onClick={state.reload}>Try again</button>}
         {state.data && (
@@ -155,6 +164,7 @@ function Catalog({ category = "products" }: { category?: string }) {
                 </p>
               </div>
             )}
+
             <div className="pagination">
               {cursor !== "0" && (
                 <button onClick={() => setParams(query ? { q: query } : {})}>
@@ -180,6 +190,7 @@ function Catalog({ category = "products" }: { category?: string }) {
     </>
   );
 }
+
 function Product() {
   const { slug } = useParams();
   const load = useCallback(
@@ -192,6 +203,7 @@ function Product() {
   const state = useApi(load);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+
   async function purchase() {
     if (!state.data) return;
     setBusy(true);
@@ -209,6 +221,7 @@ function Product() {
       setBusy(false);
     }
   }
+
   return (
     <>
       <Status {...state} />
@@ -237,7 +250,7 @@ function Product() {
                     : "Add to library"}
               </button>
               <p>
-                <Link to="/account">Sign in</Link> to purchase or download.{" "}
+                <Link to="/account">Sign in</Link> to purchase or download. {" "}
                 <Link to="/library">Open library →</Link>
               </p>
               {message && (
@@ -247,6 +260,7 @@ function Product() {
               )}
             </div>
           </section>
+
           <section className="panel">
             <h2>Community reviews</h2>
             {!state.data.reviews.length && <p>No reviews yet.</p>}
@@ -258,6 +272,7 @@ function Product() {
                 <p>{r.body}</p>
               </article>
             ))}
+
             <form
               className="stack"
               onSubmit={async (e) => {
@@ -304,18 +319,21 @@ function Product() {
     </>
   );
 }
+
 const accountLoad = (signal: AbortSignal) =>
   request<{ id: string; name: string }>("/api/account", { signal });
 const ordersLoad = (signal: AbortSignal) =>
   request<{ id: string; title: string; status: string }[]>("/api/orders", {
     signal,
   });
+
 function Account() {
   const state = useApi(accountLoad);
   const [params, setParams] = useSearchParams();
   const completing = useRef(false);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+
   useEffect(() => {
     const code = params.get("code"),
       authState = params.get("state");
@@ -333,6 +351,7 @@ function Account() {
       })
       .finally(() => setBusy(false));
   }, [params]);
+
   return (
     <section className="account panel">
       <div className="eyebrow">YOUR MAX WORLD</div>
@@ -420,9 +439,11 @@ function Account() {
     </section>
   );
 }
+
 function Orders({ initialOrder }: { initialOrder: string | null }) {
   const state = useApi(ordersLoad);
   const [message, setMessage] = useState("");
+
   async function refresh(id: string) {
     try {
       const result = await request<{ status: string }>(
@@ -434,9 +455,11 @@ function Orders({ initialOrder }: { initialOrder: string | null }) {
       setMessage(e instanceof Error ? e.message : "Could not check order");
     }
   }
+
   useEffect(() => {
     if (initialOrder) void refresh(initialOrder);
   }, [initialOrder]);
+
   return (
     <>
       <h2>Your orders</h2>
@@ -454,6 +477,7 @@ function Orders({ initialOrder }: { initialOrder: string | null }) {
     </>
   );
 }
+
 function Library() {
   const [hidden, setHidden] = useState(false);
   const load = useCallback(
@@ -463,6 +487,7 @@ function Library() {
   );
   const state = useApi(load);
   const [error, setError] = useState("");
+
   return (
     <>
       <div className="page-title">
@@ -533,11 +558,13 @@ function Library() {
     </>
   );
 }
+
 const downloadsLoad = (signal: AbortSignal) =>
   request<{ id: string; title: string; slug: string; createdAt: string }[]>(
     "/api/downloads",
     { signal },
   );
+
 function Downloads() {
   const state = useApi(downloadsLoad);
   return (
@@ -560,6 +587,7 @@ function Downloads() {
     </section>
   );
 }
+
 function Creator() {
   const { slug } = useParams();
   const load = useCallback(
@@ -571,6 +599,7 @@ function Creator() {
     [slug],
   );
   const state = useApi(load);
+
   return (
     <>
       <Status {...state} />
@@ -591,6 +620,7 @@ function Creator() {
     </>
   );
 }
+
 function App() {
   return (
     <BrowserRouter>
@@ -656,6 +686,7 @@ function App() {
     </BrowserRouter>
   );
 }
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
