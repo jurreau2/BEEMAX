@@ -1,14 +1,14 @@
-import { captureIntelligence } from "./universe-api";
-import { reconcileCompensation } from "./execution";
-import { protectPortal, auditAccess } from "./access";
-import kernel from "./kernel";
-import { routeApi } from "./routes/api";
-import { bemaxApi, compatibilityApi } from "./bemax";
-import { createEdgeRuntime } from "./runtime";
-import type { Env } from "./types";
-export { ProductFactoryActor } from "./factory";
-export { MicrokernelProcessActor } from "./kernel";
-export { InstantSpaceDurableObject } from "./InstantSpaceDurableObject";
+import { captureIntelligence } from "./universe-api.js";
+import { reconcileCompensation } from "./execution.js";
+import { protectPortal, auditAccess } from "./access.js";
+import kernel from "./kernel.js";
+import { routeApi } from "./routes/api.js";
+import { bemaxApi, compatibilityApi } from "./bemax.js";
+import { createEdgeRuntime } from "./runtime.js";
+import type { Env } from "./types.js";
+export { ProductFactoryActor } from "./factory.js";
+export { MicrokernelProcessActor } from "./kernel.js";
+export { InstantSpaceDurableObject } from "./InstantSpaceDurableObject.js";
 
 export default {
   async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
@@ -48,12 +48,11 @@ export default {
       if (request.method !== "GET") return new Response("Method not allowed", { status: 405, headers });
       if (!env.INSTANT_SPACE) return Response.json({ error: "Spatial sync unavailable" }, { status: 503, headers });
       if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket")
-        return new Response("Expected Upgrade: websocket", { status: 426, headers });
+        return Response("Expected Upgrade: websocket", { status: 426, headers });
       const objectId = env.INSTANT_SPACE.idFromName("portal-os1-spatial-space");
       return env.INSTANT_SPACE.get(objectId).fetch(request);
     }
 
-    // Health is deliberately read-only and discloses binding status, not credentials or user data.
     if ((path === "/healthz" || path === "/health") && request.method === "GET") {
       const runtime = createEdgeRuntime(env);
       return Response.json({
@@ -73,7 +72,6 @@ export default {
         return access;
       }
 
-      // Simulation mutation and replay export stay behind the existing Portal access control.
       if (path === "/sim/tick" && request.method === "POST") {
         const declaredLength = Number(request.headers.get("Content-Length") ?? 0);
         if (declaredLength > 65_536) return Response.json({ success: false, error: "Payload too large" }, { status: 413, headers });

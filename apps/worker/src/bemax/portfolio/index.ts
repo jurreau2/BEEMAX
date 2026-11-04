@@ -13,7 +13,7 @@ export class PortfolioService {
   constructor(private readonly env: any) {}
 
   async getSnapshot(): Promise<PortfolioSnapshot> {
-    const { readUniverse } = await import("../../universe-api");
+    const { readUniverse } = await import("../../universe-api.js");
     const universe = await readUniverse(this.env);
     const products = universe.products ?? [];
 

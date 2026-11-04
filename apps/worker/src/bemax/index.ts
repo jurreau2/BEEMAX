@@ -1,14 +1,14 @@
-import { BriefService } from "./briefs";
-import { RiskService } from "./risks";
-import { OpportunityService } from "./opportunities";
-import { PortfolioService } from "./portfolio";
-import { RecommendationService } from "./recommendations";
-import { CommandRouter } from "./commands/router";
-import { MemoryStore } from "./memory";
-import { EvidenceService } from "./evidence";
-import { staffIdentity } from "../access";
-import { readObject } from "../customer-auth";
-import type { Env } from "../types";
+import { BriefService } from "./briefs.js";
+import { RiskService } from "./risks.js";
+import { OpportunityService } from "./opportunities.js";
+import { PortfolioService } from "./portfolio/index.js";
+import { RecommendationService } from "./recommendations.js";
+import { CommandRouter } from "./commands/router.js";
+import { MemoryStore } from "./memory.js";
+import { EvidenceService } from "./evidence.js";
+import { staffIdentity } from "../access.js";
+import { readObject } from "../customer-auth.js";
+import type { Env } from "../types.js";
 
 const json = (value: unknown, status = 200) => Response.json(value, { status });
 
@@ -80,12 +80,10 @@ export async function bemaxApi(request: Request, env: Env): Promise<Response | n
     }
 
     if (path === "/api/bemax/commands" && request.method === "POST") {
-      const body: Record<string, unknown> = await readObject(request).catch(
-        (): Record<string, unknown> => ({ command: "daily-brief" }),
-      );
+      const body = (await readObject(request).catch(() => ({ command: "daily-brief" }))) as Record<string, unknown>;
       const payload =
         typeof body.payload === "object" && body.payload !== null && !Array.isArray(body.payload)
-          ? body.payload as Record<string, unknown>
+          ? (body.payload as Record<string, unknown>)
           : {};
       const result = commandRouter.route(String(body.command ?? "daily-brief"), payload);
       memoryStore.add("recommendation", { result, actorId: identity.id });
@@ -93,7 +91,7 @@ export async function bemaxApi(request: Request, env: Env): Promise<Response | n
     }
 
     if (path === "/api/bemax/evidence" && request.method === "POST") {
-      const body = await readObject(request).catch(() => ({ entityId: "unknown", source: "portal", metric: "status", value: 0 }));
+      const body = (await readObject(request).catch(() => ({ entityId: "unknown", source: "portal", metric: "status", value: 0 }))) as Record<string, unknown>;
       const value = typeof body.value === "number" || typeof body.value === "string" ? body.value : 0;
       const item = evidenceService.collect(
         String(body.entityId ?? "unknown"),
@@ -116,11 +114,11 @@ export async function bemaxApi(request: Request, env: Env): Promise<Response | n
   }
 }
 
-export { BriefService } from "./briefs";
-export { RiskService } from "./risks";
-export { OpportunityService } from "./opportunities";
-export { PortfolioService } from "./portfolio";
-export { RecommendationService } from "./recommendations";
-export { CommandRouter } from "./commands/router";
-export { MemoryStore } from "./memory";
-export { EvidenceService } from "./evidence";
+export { BriefService } from "./briefs.js";
+export { RiskService } from "./risks.js";
+export { OpportunityService } from "./opportunities.js";
+export { PortfolioService } from "./portfolio/index.js";
+export { RecommendationService } from "./recommendations.js";
+export { CommandRouter } from "./commands/router.js";
+export { MemoryStore } from "./memory.js";
+export { EvidenceService } from "./evidence.js";
