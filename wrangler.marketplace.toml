@@ -1,8 +1,11 @@
 name = "market-place"
 main = "apps/worker/src/marketplace-worker.ts"
 compatibility_date = "2026-04-01"
+routes = [{ pattern = "max.games/api/*", zone_name = "max.games" }]
+
 [vars]
 MARKETPLACE_ORIGIN = "https://max.games"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "portal-os1-production1-db"
