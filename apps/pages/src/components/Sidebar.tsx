@@ -6,6 +6,7 @@ const links = [
   ["/portal/ecosystem", "globe", "MAX Universe"],
   ["/portal/institute", "governance", "Institute & USS"],
   ["/portal/intelligence", "spark", "Intelligence"],
+  ["/hud", "spark", "Spatial HUD"],
   ["/portal/twin", "portfolio", "Digital twin"],
   ["/portal/marketplace", "products", "Marketplace"],
   ["/portal/dashboard", "dashboard", "Dashboard"],
