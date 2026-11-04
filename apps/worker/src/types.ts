@@ -18,6 +18,10 @@ export interface Env {
   MICROKERNEL_ACTOR?: DurableObjectNamespace;
   ALLOWED_ORIGINS?: string;
   GOVERNOR_API_TOKEN?: string;
+  CF_STREAM_ACCOUNT_ID?: string;
+  CF_STREAM_VIDEO_UID?: string;
+  CF_STREAM_CUSTOMER_CODE?: string;
+  CF_STREAM_API_TOKEN?: string;
   ENV?: string;
   ENVIRONMENT?: string;
   DISABLE_PORTAL_LOGIN?: string;

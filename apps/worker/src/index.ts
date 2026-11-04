@@ -5,6 +5,7 @@ import kernel from "./kernel.js";
 import { routeApi } from "./routes/api.js";
 import { bemaxApi, compatibilityApi } from "./bemax.js";
 import { createEdgeRuntime } from "./runtime.js";
+import { streamTokenApi } from "./stream.js";
 import type { Env } from "./types.js";
 export { ProductFactoryActor } from "./factory.js";
 export { MicrokernelProcessActor } from "./kernel.js";
@@ -70,6 +71,23 @@ export default {
         ctx.waitUntil(auditAccess(env, request, null, access.status));
         headers.forEach((value, key) => access.headers.set(key, value));
         return access;
+      }
+
+      if (path === "/api/stream/token") {
+        if (request.method !== "GET") {
+          const response = Response.json({ error: "Method not allowed" }, { status: 405, headers });
+          ctx.waitUntil(auditAccess(env, request, access, response.status));
+          return response;
+        }
+        if (access.role === "Automation") {
+          const response = Response.json({ error: "Staff sign-in required" }, { status: 403, headers });
+          ctx.waitUntil(auditAccess(env, request, null, response.status));
+          return response;
+        }
+        const response = await streamTokenApi(env);
+        headers.forEach((value, key) => response.headers.set(key, value));
+        ctx.waitUntil(auditAccess(env, request, access, response.status));
+        return response;
       }
 
       if (path === "/sim/tick" && request.method === "POST") {

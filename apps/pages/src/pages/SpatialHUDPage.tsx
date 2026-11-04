@@ -4,6 +4,7 @@ import { useGovernor } from "../layouts/GovernorLayout";
 import { Canvas2DHUDRenderer, WebGLHUDRenderer, type HUDRenderer } from "../spatial/renderers";
 import { SpatialWSManager, type SpatialConnectionState } from "../spatial/SpatialWSManager";
 import type { SpatialCursor, SpatialFrame } from "../spatial/protocol";
+import { PortalVideoPanel } from "../stream/PortalVideoPanel";
 
 export const SpatialHUDPage: React.FC = () => {
   const { token: sessionToken } = useGovernor();
@@ -152,7 +153,7 @@ export const SpatialHUDPage: React.FC = () => {
         </section>
         <aside className="spatial-hud__panel spatial-hud__media" aria-label="Media archive">
           <h2>MEDIA // ARCHIVES</h2>
-          <p>Video stream integration is not configured.</p>
+          <PortalVideoPanel />
         </aside>
       </div>
     </main>
