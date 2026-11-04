@@ -1,11 +1,12 @@
 name = "portal-os1"
 main = "apps/worker/src/index.ts"
 compatibility_date = "2026-10-30"
+account_id = "cfbebee3f0343be6fb2ed557bd4da8a1"
 
 [vars]
 ENV = "production"
 ENVIRONMENT = "production"
-ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,https://portal-os1.pages.dev,https://portal-os1-969.pages.dev"
+ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,https://portal-os1.pages.dev,https://portal-os1-969.pages.dev,https://max-games.pages.dev"
 ICVS_ENABLED = "true"
 MAX_PROCESS_HEAP_BYTES = 2097152 # 2MB Hard Cap
 

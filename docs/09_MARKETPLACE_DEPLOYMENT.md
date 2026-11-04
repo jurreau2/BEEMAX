@@ -11,10 +11,10 @@ This setup uses the Pages hostname `https://max-games.pages.dev` and the Marketp
    - Build command: `npm ci && npm run build:marketplace`
    - Build output directory: `apps/marketplace/dist`
    - Node.js version: `22.12` or later
-   - Production build variable: `VITE_API_BASE=https://<market-place-worker>.<your-account-subdomain>.workers.dev`
+   - Production build variable: `VITE_API_BASE=https://market-place.maxgamesfactoryv3-1.workers.dev`
 2. Deploy the Marketplace API Worker from the repository root with `npx wrangler deploy --config wrangler.marketplace.toml`. This config intentionally has no `routes` entry, so it deploys to `workers.dev` without requiring a zone. It allows requests from `https://max-games.pages.dev` via `MARKETPLACE_ORIGIN`.
-3. Copy the actual Worker `workers.dev` URL from the successful deployment and use that exact URL as the Pages `VITE_API_BASE`. Save the variable and redeploy Pages; Vite variables are embedded at build time.
-4. Check that the Worker and Pages project use the intended Cloudflare account and that the configured D1 database is the intended production database. The marketplace shares D1 with the Portal Worker; do not create a replacement database or run demo seed data remotely.
+3. The expected Marketplace Worker URL for the selected Cloudflare account is `https://market-place.maxgamesfactoryv3-1.workers.dev`. Confirm the URL shown after deployment matches, then rebuild/redeploy Pages after setting the exact `VITE_API_BASE` value; Vite variables are embedded at build time.
+4. Confirm that the Worker and Pages project use Cloudflare account `cfbebee3f0343be6fb2ed557bd4da8a1` and that the configured D1 database is the intended production database. The marketplace shares D1 with the Portal Worker; do not create a replacement database or run demo seed data remotely.
 
 The `pages.dev` + `workers.dev` arrangement is suitable for testing the public catalog/API. Customer sign-in relies on browser cookies across the Pages and Worker hostnames; browser third-party-cookie restrictions may prevent sign-in from working reliably. Production customer sessions, checkout, and downloads should use a custom domain with a same-origin API route and the trusted adapters described below.
 
