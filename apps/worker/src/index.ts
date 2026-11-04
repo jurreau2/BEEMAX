@@ -48,7 +48,7 @@ export default {
       if (request.method !== "GET") return new Response("Method not allowed", { status: 405, headers });
       if (!env.INSTANT_SPACE) return Response.json({ error: "Spatial sync unavailable" }, { status: 503, headers });
       if (request.headers.get("Upgrade")?.toLowerCase() !== "websocket")
-        return Response("Expected Upgrade: websocket", { status: 426, headers });
+        return new Response("Expected Upgrade: websocket", { status: 426, headers });
       const objectId = env.INSTANT_SPACE.idFromName("portal-os1-spatial-space");
       return env.INSTANT_SPACE.get(objectId).fetch(request);
     }
