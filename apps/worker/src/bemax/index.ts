@@ -1,11 +1,11 @@
-import { BriefService } from "./briefs.js";
-import { RiskService } from "./risks.js";
-import { OpportunityService } from "./opportunities.js";
+import { BriefService } from "./briefs/index.js";
+import { RiskService } from "./risks/index.js";
+import { OpportunityService } from "./opportunities/index.js";
 import { PortfolioService } from "./portfolio/index.js";
-import { RecommendationService } from "./recommendations.js";
+import { RecommendationService } from "./recommendations/index.js";
 import { CommandRouter } from "./commands/router.js";
-import { MemoryStore } from "./memory.js";
-import { EvidenceService } from "./evidence.js";
+import { MemoryStore } from "./memory/index.js";
+import { EvidenceService } from "./evidence/index.js";
 import { staffIdentity } from "../access.js";
 import { readObject } from "../customer-auth.js";
 import type { Env } from "../types.js";
@@ -114,11 +114,11 @@ export async function bemaxApi(request: Request, env: Env): Promise<Response | n
   }
 }
 
-export { BriefService } from "./briefs.js";
-export { RiskService } from "./risks.js";
-export { OpportunityService } from "./opportunities.js";
+export { BriefService } from "./briefs/index.js";
+export { RiskService } from "./risks/index.js";
+export { OpportunityService } from "./opportunities/index.js";
 export { PortfolioService } from "./portfolio/index.js";
-export { RecommendationService } from "./recommendations.js";
+export { RecommendationService } from "./recommendations/index.js";
 export { CommandRouter } from "./commands/router.js";
-export { MemoryStore } from "./memory.js";
-export { EvidenceService } from "./evidence.js";
+export { MemoryStore } from "./memory/index.js";
+export { EvidenceService } from "./evidence/index.js";

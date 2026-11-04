@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
 // Configuration Provider for the Edge Endpoint
-final portalEndpointProvider = Provider<String>((ref) => "https://portal-os1.maxgamesfactoryv3-1.workers.dev");
+final portalEndpointProvider = Provider<String>((ref) => "https://beemax.maxgamesfactoryv3-1.workers.dev");
 
 // Active Processes State Notifier
 class PortalProcessNotifier extends StateNotifier<AsyncValue<List<Map<String, dynamic>>>> {
