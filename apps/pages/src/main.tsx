@@ -1,7 +1,7 @@
 import Institute from "./pages/Institute";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Link, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, Navigate, Outlet } from "react-router-dom";
 import { GovernorLayout } from "./layouts/GovernorLayout";
 import { MainLayout } from "./layouts/MainLayout";
 import Dashboard from "./pages/Dashboard";
@@ -31,16 +31,14 @@ import GovernorHome from "./pages/GovernorHome";
 import BemaxHome from "./pages/BemaxHome";
 import { SpatialHUDPage } from "./pages/SpatialHUDPage";
 import { useGovernor } from "./layouts/GovernorLayout";
+import "./style.css";
+import "./hud.css";
 
 function RoleHome() {
   return (
     <Navigate
       replace
-      to={
-        useGovernor().role === "Governor"
-          ? "/portal/governor"
-          : "/portal/ecosystem"
-      }
+      to={useGovernor().role === "Governor" ? "/portal/governor" : "/portal/ecosystem"}
     />
   );
 }
@@ -56,17 +54,26 @@ function GovernorOnly({ children }: { children: React.ReactNode }) {
   );
 }
 
-import "./style.css";
+/** Keeps the portal login/context on application routes, never on the standalone HUD. */
+function AuthenticatedPortal() {
+  return (
+    <GovernorLayout>
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
+      <Outlet />
+    </GovernorLayout>
+  );
+}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <GovernorLayout>
-      <BrowserRouter>
-        <a href="#main-content" className="skip-link">
-          Skip to content
-        </a>
-        <Routes>
-          <Route path="/hud" element={<SpatialHUDPage />} />
+    <BrowserRouter>
+      <Routes>
+        {/* Standalone route: deliberately outside GovernorLayout and MainLayout. */}
+        <Route path="/hud" element={<SpatialHUDPage />} />
+
+        <Route element={<AuthenticatedPortal />}>
           <Route element={<MainLayout />}>
             <Route index element={<RoleHome />} />
             <Route path="portal/dashboard" element={<Dashboard />} />
@@ -79,7 +86,14 @@ createRoot(document.getElementById("root")!).render(
             <Route path="portal/recommendations" element={<Recommendations />} />
             <Route path="portal" element={<Ecosystem />} />
             <Route path="portal/ecosystem" element={<Ecosystem />} />
-            <Route path="portal/governor" element={<GovernorOnly><GovernorHome /></GovernorOnly>} />
+            <Route
+              path="portal/governor"
+              element={
+                <GovernorOnly>
+                  <GovernorHome />
+                </GovernorOnly>
+              }
+            />
             <Route path="portal/divisions/:id" element={<DivisionCentre />} />
             <Route path="portal/institute" element={<Institute />} />
             <Route path="portal/intelligence" element={<Intelligence />} />
@@ -93,6 +107,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="portal/departments" element={<Departments />} />
             <Route path="portal/approvals" element={<Approvals />} />
             <Route path="portal/forecasting" element={<Forecasting />} />
+
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="bemax" element={<BemaxHome />} />
             <Route path="portfolio" element={<Portfolio />} />
@@ -105,15 +120,30 @@ createRoot(document.getElementById("root")!).render(
             <Route path="analytics" element={<Analytics />} />
             <Route path="departments" element={<Departments />} />
             <Route path="forecasting" element={<Forecasting />} />
-            <Route path="governance" element={<GovernorOnly><Governance /></GovernorOnly>} />
+            <Route
+              path="governance"
+              element={
+                <GovernorOnly>
+                  <Governance />
+                </GovernorOnly>
+              }
+            />
             <Route path="publishing" element={<Publishing />} />
             <Route path="revenue" element={<Revenue />} />
             <Route path="recommendations" element={<Recommendations />} />
             <Route path="settings" element={<Settings />} />
-            <Route path="*" element={<><h1>Page not found</h1><Link to="/">Return to dashboard</Link></>} />
+            <Route
+              path="*"
+              element={
+                <>
+                  <h1>Page not found</h1>
+                  <Link to="/">Return to dashboard</Link>
+                </>
+              }
+            />
           </Route>
-        </Routes>
-      </BrowserRouter>
-    </GovernorLayout>
+        </Route>
+      </Routes>
+    </BrowserRouter>
   </StrictMode>,
 );

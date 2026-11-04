@@ -1,0 +1,54 @@
+/* Spatial HUD visual treatment; scoped so the portal shell remains unchanged. */
+body:has(canvas[aria-hidden="true"]) {
+  background: #030507;
+  color: #c6d1de;
+  overflow: hidden;
+}
+
+#root > div:has(> canvas[aria-hidden="true"]) {
+  background-color: #030507 !important;
+  color: #c6d1de !important;
+  isolation: isolate;
+}
+
+#root > div:has(> canvas[aria-hidden="true"])::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(0, 255, 102, 0.075) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 102, 0.075) 1px, transparent 1px),
+    radial-gradient(circle at 50% 50%, transparent 0 18%, rgba(0, 255, 102, 0.12) 18.1% 18.2%, transparent 18.3% 29%, rgba(255, 176, 0, 0.09) 29.1% 29.2%, transparent 29.3%);
+  background-size: 48px 48px, 48px 48px, 100% 100%;
+}
+
+#root > div:has(> canvas[aria-hidden="true"]) header,
+#root > div:has(> canvas[aria-hidden="true"]) aside,
+#root > div:has(> canvas[aria-hidden="true"]) button {
+  background-color: rgba(3, 5, 7, 0.94) !important;
+  border-color: #1a2332 !important;
+  color: #00ff66 !important;
+  border-radius: 0 !important;
+}
+
+#root > div:has(> canvas[aria-hidden="true"]) button:hover,
+#root > div:has(> canvas[aria-hidden="true"]) button:focus-visible {
+  border-color: #00ff66 !important;
+  box-shadow: 0 0 14px rgba(0, 255, 102, 0.2);
+}
+
+#root > div:has(> canvas[aria-hidden="true"]) h1,
+#root > div:has(> canvas[aria-hidden="true"]) h2,
+#root > div:has(> canvas[aria-hidden="true"]) span {
+  color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #root > div:has(> canvas[aria-hidden="true"]) * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
