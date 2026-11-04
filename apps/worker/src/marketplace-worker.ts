@@ -1,6 +1,8 @@
 import type { Env } from "./types";
 import { marketplaceApi, reconcilePayments } from "./marketplace";
 export { InstantSpaceDurableObject } from "./InstantSpaceDurableObject";
+export { MicrokernelProcessActor } from "./kernel";
+export { ProductFactoryActor } from "./factory";
 
 export default {
   async scheduled(
